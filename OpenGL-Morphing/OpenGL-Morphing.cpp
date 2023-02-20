@@ -11,6 +11,44 @@ std::vector<Point>* startShape = new std::vector<Point>();
 std::vector<Point>* endShape = new std::vector<Point>();
 std::vector<Point>* currentShape = new std::vector<Point>();
 
+void renderBitmapString(
+	float x,
+	float y,
+	float z,
+	void* font,
+	char* string) 
+{
+	glMatrixMode(GL_PROJECTION);    //Select projection matrix
+	glPushMatrix();                 //save it
+	glLoadIdentity();
+
+	glMatrixMode(GL_MODELVIEW);    //Select modelview matrix
+	glPushMatrix();                //save it
+	glLoadIdentity();
+
+	const double w = glutGet(GLUT_WINDOW_WIDTH);
+	const double h = glutGet(GLUT_WINDOW_HEIGHT);
+	glOrtho(0, w, h, 0, -100, 100);
+
+	// set up ur glOrtho
+	char* c;
+	glRasterPos3f(x, y, z);
+
+	for (c = string; *c != '\0'; c++)
+	{
+		//std::cout << *c;
+		glutBitmapCharacter(font, *c);
+	}
+
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();                //Restore your old projection matrix
+
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
+
+
+}
+
 void display() 
 {
 	glClearColor(0, 0, 0, 1);
@@ -33,6 +71,10 @@ void display()
 	}
 
 	glEnd();
+
+	// Test on showing test
+	char theString[] = "HELLO THERE";
+	renderBitmapString(0, 0, 0, GLUT_BITMAP_9_BY_15, theString);
 
 
 	glMatrixMode(GL_MODELVIEW);
