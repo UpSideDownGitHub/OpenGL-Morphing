@@ -21,5 +21,6 @@ public:
 	Color color;
 	float scale;
 	float rotation;
+
 };
 
