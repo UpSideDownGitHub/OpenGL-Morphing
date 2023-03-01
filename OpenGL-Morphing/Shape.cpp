@@ -42,3 +42,12 @@ void Square::drawShape(Vector3 newPos)
 	}
 	glEnd();
 }
+void Square::drawShape()
+{
+	glBegin(GL_QUAD_STRIP);
+	for (size_t i = 0; i < points->size(); i++)
+	{
+		glVertex3f(points->at(i).position.x, points->at(i).position.y, points->at(i).position.z);
+	}
+	glEnd();
+}
