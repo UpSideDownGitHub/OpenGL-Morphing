@@ -24,6 +24,7 @@ public:
 	//functions
 	void drawShape(Vector3);
 	void drawShape();
+	void drawShapeOutline();
 
 	// operator
 };

@@ -51,3 +51,16 @@ void Square::drawShape()
 	}
 	glEnd();
 }
+void Square::drawShapeOutline()
+{
+	glPushMatrix();
+	glBegin(GL_LINE_LOOP);
+	glColor4f(255, 255, 255, 255);
+	glVertex3f(points->at(0).position.x, points->at(0).position.y, points->at(0).position.z);
+	glVertex3f(points->at(1).position.x, points->at(1).position.y, points->at(1).position.z);
+	glVertex3f(points->at(3).position.x, points->at(3).position.y, points->at(3).position.z);
+	glVertex3f(points->at(2).position.x, points->at(2).position.y, points->at(2).position.z);
+
+	glEnd();
+	glPopMatrix();
+}
