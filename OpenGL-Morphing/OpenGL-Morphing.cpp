@@ -12,8 +12,13 @@
 #include "Vector3.h"
 #include "Text.h"
 
-std::vector<Point>* startShape = new std::vector<Point>();
-std::vector<Point>* endShape = new std::vector<Point>();
+// the shape to move to
+std::vector<Point> targetShape = std::vector<Point>();
+
+// the shape to change the points of (copy of the player shape)
+std::vector<Point>* mergingShape = new std::vector<Point>();
+
+// the shape the player has drawn
 std::vector<Point>* currentShape = new std::vector<Point>();
 std::vector<Square>* currentShapePoints = new std::vector<Square>();
 
@@ -24,6 +29,8 @@ float mouseY;
 
 // booleans
 bool showOrignalShape = true;
+bool showOrignalFinished = false;
+bool mergeShapes = false;
 
 // Gameplay Shapes
 Square gameSquare = Square(Vector3(300, 300, 0), 200, 200);
@@ -35,16 +42,23 @@ int currentPoints;
 // Timer
 float learnTime = 5;
 
+// interpolation
+float morphTime = 0.0;
+
+// score
+int score = 0;
+
 // Text
 Text scoreText = Text(Vector3(275,20,0), Color(255,255,255,255), "Score");
+Text playerScore = Text(Vector3(275,35,0), Color(255,255,255,255), "0");
 Text pointsLeftText = Text(Vector3(250,575,0), Color(255,255,255,255), "Points Left");
-Text currentPointsText = Text(Vector3(295,595,0), Color(255,255,255,255), " ");
+Text currentPointsText = Text(Vector3(295,595,0), Color(255,255,255,255), "0");
 Text learnText = Text(Vector3(275, 50, 0), Color(255,0,0,255), "Learn");
 Text drawText = Text(Vector3(275, 50, 0), Color(0,255,0,255), "Draw");
 
 
 
-void idle()
+void checkTime()
 {
 	auto elapsedTime = std::chrono::system_clock::now() - learnStartTime;
 
@@ -55,11 +69,26 @@ void idle()
 	}
 }
 
+void idle()
+{
+	morphTime += 0.00000001;
+}
+
+void interpolateShape()
+{
+	
+	for (size_t i = 0; i < mergingShape->size(); i++)
+	{
+		mergingShape->at(i) = currentShape->at(i) * (1.0 - morphTime) + targetShape.at(i) * morphTime;
+	}	
+}
+
 void display()
 {
 	glClearColor(0, 0, 0, 1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
+	checkTime();
 	idle();
 
 	// Set up Projection
@@ -69,13 +98,20 @@ void display()
 	const double h = glutGet(GLUT_WINDOW_HEIGHT);
 	glOrtho(0, w, h, 0, -100, 100);
 
+	// interpolate the shape from the one drawn to the correct shape
+	if (mergeShapes)
+	{
+		if (morphTime > 1.0) morphTime = 1.0;
+		interpolateShape();	
+	}
 
 	// Draw Text Objects
 	scoreText.drawText();
+	playerScore.drawText();
 	pointsLeftText.drawText();
 	currentPointsText.drawText();
 
-	if (showOrignalShape)
+	if (showOrignalShape || showOrignalFinished)
 	{
 		// Draw game objects
 		learnText.drawText();
@@ -103,7 +139,6 @@ void display()
 	}
 	glPopMatrix();
 
-
 	// Draw the mouse pointer
 	glPopMatrix();
 	mousePointer.drawShape(Vector3(mouseX, mouseY, 0));
@@ -129,13 +164,45 @@ void mouseClicks(int button, int state, int x, int y)
 		{
 			showOrignalShape = false;
 
-			Point point = Point(Vector3(x, y, 0), Color(255, 255, 255, 255), 1, 0);
+			Point point = Point(Vector3(x, y, 0), Color(255, 0, 0, 255), 1, 0);
 			currentShape->push_back(point);
 			Square position = Square(Vector3(x, y, 0), 10, 10);
 			currentShapePoints->push_back(position);
 
 			currentPoints--;
 			currentPointsText.setText(std::to_string(currentPoints));
+		}
+
+		if (currentPoints == 0)
+		{
+			mergeShapes = true;
+			showOrignalFinished = true;
+
+			currentShapePoints->clear();
+
+			mergingShape = currentShape;
+			targetShape = *gameSquare.points;
+
+			// calculate the points for the player to earn based on the distance
+			int runningTotal = 0;
+			for (size_t i = 0; i < currentShape->size(); i++)
+			{
+				//Root ((x2 - x1)2 + (y2 - y1)2 + (z2 - z1)2 )
+				int X1 = currentShape->at(i).position.x;
+				int Y1 = currentShape->at(i).position.y;
+				int Z1 = currentShape->at(i).position.z;
+				int X2 = targetShape.at(i).position.x;
+				int Y2 = targetShape.at(i).position.y;
+				int Z2 = targetShape.at(i).position.z;
+				
+				int p1 = pow(X2 - X1, 2);
+				int p2 = pow(Y2 - Y1, 2);
+				int p3 = pow(Z2 - Z1, 2);
+				int distance = sqrtf(p1 + p2 + p3);
+				runningTotal += distance;
+			}
+			playerScore.setText(std::to_string(runningTotal));
+
 		}
 	}
 	glutPostRedisplay();
@@ -152,6 +219,8 @@ void init()
 
 	learnStartTime = std::chrono::system_clock::now();
 }
+
+
 
 int main(int argc, char** argv) {
 	glutInit(&argc, argv);

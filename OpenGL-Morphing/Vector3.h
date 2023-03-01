@@ -29,6 +29,10 @@ public:
 	{
 		return Vector3(x + p.x, y + p.y, z + p.z);
 	}
+
+	Vector3 operator * (float k) {
+		return Vector3(x * k, y * k, z * k);
+	}
 };
 
 class Color
