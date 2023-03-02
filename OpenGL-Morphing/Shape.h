@@ -7,25 +7,25 @@ class Shape
 private:
 
 public:
-
-};
-
-class Square : Shape
-{
-public:
-	// constructor
-	Square(Vector3 pos, float width, float height);
-
+	Shape();
 	// variables
 	std::vector<Point>* points = new std::vector<Point>();
-	float width;
-	float height;
 
 	//functions
 	void drawShape(Vector3);
 	void drawShape();
 	void drawShapeOutline();
 
-	// operator
+};
+
+class Square : public Shape
+{
+public:
+	// constructor
+	Square(Vector3 pos, float width, float height);
+
+	// variables
+	float width;
+	float height;
 };
 

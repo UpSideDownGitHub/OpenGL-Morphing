@@ -127,6 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Closest.cpp" />
     <ClCompile Include="OpenGL-Morphing.cpp" />
     <ClCompile Include="Point.cpp" />
     <ClCompile Include="Shape.cpp" />
@@ -134,6 +135,7 @@
     <ClCompile Include="Vector3.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Closest.h" />
     <ClInclude Include="Point.h" />
     <ClInclude Include="Shape.h" />
     <ClInclude Include="Text.h" />

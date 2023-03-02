@@ -11,19 +11,20 @@
 #include "Shape.h"
 #include "Vector3.h"
 #include "Text.h"
+#include "Closest.h"
+
+Closest closest = Closest();
+std::vector<int> drawOrder;
 
 // the shape to move to
 std::vector<Point> targetShape = std::vector<Point>();
-
-// the shape to change the points of (copy of the player shape)
-std::vector<Point>* mergingShape = new std::vector<Point>();
 
 // the shape the player has drawn
 std::vector<Point>* currentShape = new std::vector<Point>();
 std::vector<Square>* currentShapePoints = new std::vector<Square>();
 
 // mouse movement
-Square mousePointer = Square(Vector3(0,0,0), 10, 10);
+Shape mousePointer = Square(Vector3(0,0,0), 10, 10);
 float mouseX;
 float mouseY;
 
@@ -33,7 +34,7 @@ bool showOrignalFinished = false;
 bool mergeShapes = false;
 
 // Gameplay Shapes
-Square gameSquare = Square(Vector3(300, 300, 0), 200, 200);
+Shape gameSquare = Square(Vector3(300, 300, 0), 200, 200);
 
 // Points
 std::chrono::system_clock::time_point learnStartTime;
@@ -71,16 +72,38 @@ void checkTime()
 
 void idle()
 {
-	morphTime += 0.00000001;
+	morphTime += 0.0001;
 }
 
 void interpolateShape()
 {
-	
-	for (size_t i = 0; i < mergingShape->size(); i++)
+	// Interpolation of all of the potins of the shape
+	for (size_t i = 0; i < currentShape->size(); i++)
 	{
-		mergingShape->at(i) = currentShape->at(i) * (1.0 - morphTime) + targetShape.at(i) * morphTime;
+		currentShape->at(i) = currentShape->at(i) * (1.0 - morphTime) + targetShape.at(i) * morphTime;
 	}	
+
+	// TODO -- need to change both of these loops so that they go in the order of the closest shape meanign a proper square will be drawn (hopefully)
+	// draw the fill of the interpolating shape
+	glPushMatrix();
+	glBegin(GL_TRIANGLE_FAN);
+	for (size_t i = 0; i < currentShape->size(); i++)
+	{
+		glVertex3f(currentShape->at(i).position.x, currentShape->at(i).position.y, currentShape->at(i).position.z);
+	}
+	glEnd();
+	glPopMatrix();
+
+	// draw the outline of the interpolating shape
+	glPushMatrix();
+	glBegin(GL_LINE_LOOP);
+	glColor4f(255, 0, 0, 255); 
+	for (size_t i = 0; i < currentShape->size(); i++)
+	{
+		glVertex3f(currentShape->at(i).position.x, currentShape->at(i).position.y, currentShape->at(i).position.z);
+	}
+	glEnd();
+	glPopMatrix();
 }
 
 void display()
@@ -98,12 +121,7 @@ void display()
 	const double h = glutGet(GLUT_WINDOW_HEIGHT);
 	glOrtho(0, w, h, 0, -100, 100);
 
-	// interpolate the shape from the one drawn to the correct shape
-	if (mergeShapes)
-	{
-		if (morphTime > 1.0) morphTime = 1.0;
-		interpolateShape();	
-	}
+	
 
 	// Draw Text Objects
 	scoreText.drawText();
@@ -121,23 +139,33 @@ void display()
 		drawText.drawText();
 
 
-	// Draw the player drawn shape
-	glPushMatrix();
-	glBegin(GL_LINE_LOOP);
-	for (size_t i = 0; i < currentShape->size(); i++)
+	// interpolate the shape from the one drawn to the correct shape
+	if (mergeShapes)
 	{
-		glColor4f(currentShape->at(i).color.r, currentShape->at(i).color.g, currentShape->at(i).color.b, currentShape->at(i).color.a);
-		glVertex3f(currentShape->at(i).position.x, currentShape->at(i).position.y, currentShape->at(i).position.z);
+		if (morphTime > 1.0) morphTime = 1.0;
+		interpolateShape();
 	}
-	glEnd();
-	glPopMatrix();
-	glPushMatrix();
-	glColor4f(255, 255, 255, 255);
-	for (size_t i = 0; i < currentShapePoints->size(); i++)
+	else
 	{
-		currentShapePoints->at(i).drawShape();
+		// Draw the player drawn shape
+		glPushMatrix();
+		glBegin(GL_LINE_LOOP);
+		for (size_t i = 0; i < currentShape->size(); i++)
+		{
+			glColor4f(currentShape->at(i).color.r, currentShape->at(i).color.g, currentShape->at(i).color.b, currentShape->at(i).color.a);
+			glVertex3f(currentShape->at(i).position.x, currentShape->at(i).position.y, currentShape->at(i).position.z);
+		}
+		glEnd();
+		glPopMatrix();
+		
+		glPushMatrix();
+		glColor4f(255, 255, 255, 255);
+		for (size_t i = 0; i < currentShapePoints->size(); i++)
+		{
+			currentShapePoints->at(i).drawShape();
+		}
+		glPopMatrix();
 	}
-	glPopMatrix();
 
 	// Draw the mouse pointer
 	glPopMatrix();
@@ -173,15 +201,16 @@ void mouseClicks(int button, int state, int x, int y)
 			currentPointsText.setText(std::to_string(currentPoints));
 		}
 
-		if (currentPoints == 0)
+		if (currentPoints == 0 && !mergeShapes)
 		{
 			mergeShapes = true;
 			showOrignalFinished = true;
 
 			currentShapePoints->clear();
 
-			mergingShape = currentShape;
-			targetShape = *gameSquare.points;
+			// need to change the target potions so that they show the new point reorders to be thge closest values
+			targetShape = closest.findClosest(*currentShape, *gameSquare.points);
+			drawOrder = closest.listOrder;
 
 			// calculate the points for the player to earn based on the distance
 			int runningTotal = 0;
