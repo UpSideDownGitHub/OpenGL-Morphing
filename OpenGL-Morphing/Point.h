@@ -14,7 +14,7 @@ class Point
 {
 public:
 	// Constructer
-	Point(Vector3, Color, float, float);
+	Point(Vector3 pos, Color col, float sca, float rot);
 
 	// variables
 	Vector3 position;

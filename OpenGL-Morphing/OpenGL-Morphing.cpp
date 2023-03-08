@@ -34,7 +34,7 @@ bool showOrignalFinished = false;
 bool mergeShapes = false;
 
 // Gameplay Shapes
-Shape gameSquare = Square(Vector3(300, 300, 0), 200, 200);
+Shape currentGameShape = Square(Vector3(300, 300, 0), 100, 100);
 
 // Points
 std::chrono::system_clock::time_point learnStartTime;
@@ -72,7 +72,7 @@ void checkTime()
 
 void idle()
 {
-	morphTime += 0.0001;
+	morphTime += 0.0000001;
 }
 
 void interpolateShape()
@@ -83,16 +83,19 @@ void interpolateShape()
 		currentShape->at(i) = currentShape->at(i) * (1.0 - morphTime) + targetShape.at(i) * morphTime;
 	}	
 
-	// TODO -- need to change both of these loops so that they go in the order of the closest shape meanign a proper square will be drawn (hopefully)
+	// TODO: need to change both of these loops so that they go in the order of the closest shape meanign a proper square will be drawn (hopefully)
+	
 	// draw the fill of the interpolating shape
+	/*
 	glPushMatrix();
-	glBegin(GL_TRIANGLE_FAN);
+	glBegin(GL_QUADS);
 	for (size_t i = 0; i < currentShape->size(); i++)
 	{
 		glVertex3f(currentShape->at(i).position.x, currentShape->at(i).position.y, currentShape->at(i).position.z);
 	}
 	glEnd();
 	glPopMatrix();
+	*/
 
 	// draw the outline of the interpolating shape
 	glPushMatrix();
@@ -133,7 +136,7 @@ void display()
 	{
 		// Draw game objects
 		learnText.drawText();
-		gameSquare.drawShapeOutline();
+		currentGameShape.drawShapeOutline();
 	}
 	else
 		drawText.drawText();
@@ -209,7 +212,7 @@ void mouseClicks(int button, int state, int x, int y)
 			currentShapePoints->clear();
 
 			// need to change the target potions so that they show the new point reorders to be thge closest values
-			targetShape = closest.findClosest(*currentShape, *gameSquare.points);
+			targetShape = closest.findClosest(*currentShape, *currentGameShape.points);
 			drawOrder = closest.listOrder;
 
 			// calculate the points for the player to earn based on the distance
@@ -236,23 +239,73 @@ void mouseClicks(int button, int state, int x, int y)
 	}
 	glutPostRedisplay();
 }
-void keyPressed(unsigned char key, int x, int y)
+
+
+void chooseShape()
 {
+	int ran = rand() % (7 - 0 + 1) + 0;
+	switch (ran)
+	{
+	case 0:
+		currentGameShape = Square(Vector3(300, 300, 0), 100, 100);
+		break;
+	case 1:
+		currentGameShape = Triangle(Vector3(300, 300, 0), 100, 100);
+		break;
+	case 2:
+		currentGameShape = Star(Vector3(300, 300, 0), 100);
+		break;
+	case 3:
+		currentGameShape = Pentagon(Vector3(300, 300, 0), 100);
+		break;
+	case 4:
+		currentGameShape = Cross(Vector3(300, 300, 0), 100, 100);
+		break;
+	case 5:
+		currentGameShape = Rhombus(Vector3(300, 300, 0), 100, 100);
+		break;
+	case 6:
+		currentGameShape = Trapezium(Vector3(300, 300, 0), 100, 100);
+		break;
+	case 7:
+		currentGameShape = Arrow(Vector3(300, 300, 0), 100, 100);
+		break;
+	default:
+		currentGameShape = Square(Vector3(300, 300, 0), 100, 100);
+		break;
+	}
 
 }
 
 void init()
 {
-	currentPoints = gameSquare.points->size();
+	chooseShape();
+	currentPoints = currentGameShape.points->size();
 	currentPointsText.setText(std::to_string(currentPoints));
 
 	learnStartTime = std::chrono::system_clock::now();
+}
+
+void keyPressed(unsigned char key, int x, int y)
+{
+	if (key == 'r')
+	{
+		// respawn a new object
+		mergeShapes = false;
+		showOrignalFinished = false;
+		showOrignalShape = true;
+		currentShape->clear();
+		currentShapePoints->clear();
+		init();
+
+	}
 }
 
 
 
 int main(int argc, char** argv) {
 	glutInit(&argc, argv);
+	srand(time(NULL));
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
 	glutInitWindowSize(600, 600);
 	glutCreateWindow("GLUT");
