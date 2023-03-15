@@ -12,6 +12,16 @@
 #include "Vector3.h"
 #include "Text.h"
 #include "Closest.h"
+#include "MainMenu.h"
+#include "ResultsScreen.h"
+
+void init();
+void reset();
+void newShape();
+void mainGameLoop();
+void mainGameMouseClicked(int button, int state, int x, int y);
+void mainMenuMouseClicked(int button, int state, int x, int y);
+void resultsMenuMouseClicked(int button, int state, int x, int y);
 
 Closest closest = Closest();
 std::vector<int> drawOrder;
@@ -48,14 +58,32 @@ float morphTime = 0.0;
 
 // score
 int score = 0;
+int bestScore = 9999;
+
+// Level Systsem
+int level = 0, maxLevels = 5;
+float levelStartTime = 2;
+std::chrono::system_clock::time_point endStartTime;
 
 // Text
 Text scoreText = Text(Vector3(275,20,0), Color(255,255,255,255), "Score");
 Text playerScore = Text(Vector3(275,35,0), Color(255,255,255,255), "0");
 Text pointsLeftText = Text(Vector3(250,575,0), Color(255,255,255,255), "Points Left");
 Text currentPointsText = Text(Vector3(295,595,0), Color(255,255,255,255), "0");
-Text learnText = Text(Vector3(275, 50, 0), Color(255,0,0,255), "Learn");
-Text drawText = Text(Vector3(275, 50, 0), Color(0,255,0,255), "Draw");
+Text learnText = Text(Vector3(265, 50, 0), Color(255,0,0,255), "Learn");
+Text drawText = Text(Vector3(270, 50, 0), Color(0,255,0,255), "Draw");
+Text welldoneText = Text(Vector3(255, 50, 0), Color(0,0,255,255), "Well Done");
+Text currentLevelText = Text(Vector3(10, 20, 0), Color(255, 255, 255, 255), "Level: ");
+Text currentLevel = Text(Vector3(30, 35, 0), Color(255, 255, 255, 255), "1");
+
+
+// Main Menu
+bool inMainMenu = true;
+MainMenu mainMenu = MainMenu();
+
+// Results Screen
+bool inResultsScreen = false;
+ResultsScreen resultsScreen = ResultsScreen();
 
 
 
@@ -111,9 +139,19 @@ void interpolateShape()
 
 void display()
 {
+	if (inMainMenu)
+		mainMenu.drawMainMenu();
+	else if (inResultsScreen)
+		resultsScreen.drawResultsScreen();
+	else
+		mainGameLoop();
+}
+
+void mainGameLoop()
+{
 	glClearColor(0, 0, 0, 1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
+
 	checkTime();
 	idle();
 
@@ -124,18 +162,46 @@ void display()
 	const double h = glutGet(GLUT_WINDOW_HEIGHT);
 	glOrtho(0, w, h, 0, -100, 100);
 
-	
+
 
 	// Draw Text Objects
 	scoreText.drawText();
 	playerScore.drawText();
 	pointsLeftText.drawText();
 	currentPointsText.drawText();
+	currentLevelText.drawText();
+	currentLevel.drawText();
+
+	// check for time and then respawn the game
+	if (showOrignalFinished)
+	{
+		welldoneText.drawText();
+
+		auto elapsedTime = std::chrono::system_clock::now() - endStartTime;
+
+		if (std::chrono::duration<float>(elapsedTime).count() > levelStartTime)
+		{
+			level++;
+			currentLevel.setText(std::to_string(level+1));
+			if (level < maxLevels)
+				newShape();
+			else
+			{
+				if (score < bestScore)
+					bestScore = score;
+				resultsScreen.updateScores(score, bestScore);
+				inResultsScreen = true;
+				reset();
+			}
+		}
+	}
+
 
 	if (showOrignalShape || showOrignalFinished)
 	{
 		// Draw game objects
-		learnText.drawText();
+		if (!showOrignalFinished)
+			learnText.drawText();
 		currentGameShape.drawShapeOutline();
 	}
 	else
@@ -160,7 +226,7 @@ void display()
 		}
 		glEnd();
 		glPopMatrix();
-		
+
 		glPushMatrix();
 		glColor4f(255, 255, 255, 255);
 		for (size_t i = 0; i < currentShapePoints->size(); i++)
@@ -188,6 +254,41 @@ void motion(int x, int y)
 
 void mouseClicks(int button, int state, int x, int y)
 {
+	if (inMainMenu)
+		mainMenuMouseClicked(button, state, x, y);
+	else if (inResultsScreen)
+		resultsMenuMouseClicked(button, state, x, y);
+	else
+		mainGameMouseClicked(button, state, x, y);
+}
+
+void resultsMenuMouseClicked(int button, int state, int x, int y)
+{
+	// If left mouse button pressed
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_UP)
+	{
+		inMainMenu = false;
+		inResultsScreen = false;
+		learnStartTime = std::chrono::system_clock::now();
+	}
+	else if (button == GLUT_RIGHT_BUTTON && state == GLUT_UP)
+	{
+		inMainMenu = true;
+		inResultsScreen = false;
+	}
+}
+void mainMenuMouseClicked(int button, int state, int x, int y)
+{
+	// If left mouse button pressed
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_UP)
+	{
+		inMainMenu = false;
+		learnStartTime = std::chrono::system_clock::now();
+	}
+	glutPostRedisplay();
+}
+void mainGameMouseClicked(int button, int state, int x, int y)
+{
 	// If left mouse button pressed
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_UP)
 	{
@@ -206,10 +307,15 @@ void mouseClicks(int button, int state, int x, int y)
 
 		if (currentPoints == 0 && !mergeShapes)
 		{
+			// end of the current level
 			mergeShapes = true;
 			showOrignalFinished = true;
 
+			// remove the player placed points
 			currentShapePoints->clear();
+
+			// start the timer to end the round
+			endStartTime = std::chrono::system_clock::now();
 
 			// need to change the target potions so that they show the new point reorders to be thge closest values
 			targetShape = closest.findClosest(*currentShape, *currentGameShape.points);
@@ -226,14 +332,15 @@ void mouseClicks(int button, int state, int x, int y)
 				int X2 = targetShape.at(i).position.x;
 				int Y2 = targetShape.at(i).position.y;
 				int Z2 = targetShape.at(i).position.z;
-				
+
 				int p1 = pow(X2 - X1, 2);
 				int p2 = pow(Y2 - Y1, 2);
 				int p3 = pow(Z2 - Z1, 2);
 				int distance = sqrtf(p1 + p2 + p3);
 				runningTotal += distance;
 			}
-			playerScore.setText(std::to_string(runningTotal));
+			score += runningTotal;
+			playerScore.setText(std::to_string(score));
 
 		}
 	}
@@ -282,23 +389,39 @@ void init()
 	chooseShape();
 	currentPoints = currentGameShape.points->size();
 	currentPointsText.setText(std::to_string(currentPoints));
-
 	learnStartTime = std::chrono::system_clock::now();
+}
+
+void reset()
+{
+	chooseShape();
+	currentPoints = currentGameShape.points->size();
+	currentPointsText.setText(std::to_string(currentPoints));
+	learnStartTime = std::chrono::system_clock::now();
+	showOrignalShape = true;
+	showOrignalFinished = false;
+	mergeShapes = false;
+	morphTime = 0.0;
+	score = 0;
+	playerScore.setText(std::to_string(score));
+	level = 0;
+	levelStartTime = 2;
+	currentShape->clear();
+}
+
+void newShape()
+{
+	// respawn a new object
+	mergeShapes = false;
+	showOrignalFinished = false;
+	showOrignalShape = true;
+	currentShape->clear();
+	currentShapePoints->clear();
+	init();
 }
 
 void keyPressed(unsigned char key, int x, int y)
 {
-	if (key == 'r')
-	{
-		// respawn a new object
-		mergeShapes = false;
-		showOrignalFinished = false;
-		showOrignalShape = true;
-		currentShape->clear();
-		currentShapePoints->clear();
-		init();
-
-	}
 }
 
 

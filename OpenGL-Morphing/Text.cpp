@@ -9,6 +9,7 @@ Text::Text(Vector3 val1, Color val2, std::string val3)
 	text = val3;
 }
 
+
 // Methods
 void Text::drawText()
 {
