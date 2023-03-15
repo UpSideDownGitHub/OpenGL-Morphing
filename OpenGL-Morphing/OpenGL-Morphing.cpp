@@ -114,16 +114,15 @@ void interpolateShape()
 	// TODO: need to change both of these loops so that they go in the order of the closest shape meanign a proper square will be drawn (hopefully)
 	
 	// draw the fill of the interpolating shape
-	/*
+	
 	glPushMatrix();
-	glBegin(GL_QUADS);
+	glBegin(GL_TRIANGLE_FAN);
 	for (size_t i = 0; i < currentShape->size(); i++)
 	{
 		glVertex3f(currentShape->at(i).position.x, currentShape->at(i).position.y, currentShape->at(i).position.z);
 	}
 	glEnd();
 	glPopMatrix();
-	*/
 
 	// draw the outline of the interpolating shape
 	glPushMatrix();
