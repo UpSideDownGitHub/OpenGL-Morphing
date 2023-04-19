@@ -8,7 +8,8 @@
 #include "glut.h"
 #include "Vector3.h"
 
-
+#ifndef POINTDEFINTION
+#define POINTDEFINTION
 
 class Point
 {
@@ -30,4 +31,4 @@ public:
 		return Point(position + p.position, color, scale, rotation);
 	}
 };
-
+#endif

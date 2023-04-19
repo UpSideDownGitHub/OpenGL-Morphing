@@ -29,6 +29,9 @@ std::vector<int> drawOrder;
 // the shape to move to
 std::vector<Point> targetShape = std::vector<Point>();
 
+std::vector<Point> oldShapePoints = std::vector<Point>();
+std::vector<Point> newShapePoints = std::vector<Point>();
+
 // the shape the player has drawn
 std::vector<Point>* currentShape = new std::vector<Point>();
 std::vector<Square>* currentShapePoints = new std::vector<Square>();
@@ -42,6 +45,7 @@ float mouseY;
 bool showOrignalShape = true;
 bool showOrignalFinished = false;
 bool mergeShapes = false;
+bool changingShapes = false;
 
 // Gameplay Shapes
 Shape currentGameShape = Square(Vector3(300, 300, 0), 100, 100);
@@ -49,6 +53,10 @@ Shape currentGameShape = Square(Vector3(300, 300, 0), 100, 100);
 // Points
 std::chrono::system_clock::time_point learnStartTime;
 int currentPoints;
+
+// changing shape
+std::chrono::system_clock::time_point changeShapeStartTime;
+float shapeChangeTime = 2;
 
 // Timer
 float learnTime = 5;
@@ -63,6 +71,7 @@ int bestScore = 9999;
 // Level Systsem
 int level = 0, maxLevels = 5;
 float levelStartTime = 2;
+int previousShape = 0;
 std::chrono::system_clock::time_point endStartTime;
 
 // Text
@@ -73,6 +82,7 @@ Text currentPointsText = Text(Vector3(295,595,0), Color(255,255,255,255), "0");
 Text learnText = Text(Vector3(265, 50, 0), Color(255,0,0,255), "Learn");
 Text drawText = Text(Vector3(270, 50, 0), Color(0,255,0,255), "Draw");
 Text welldoneText = Text(Vector3(255, 50, 0), Color(0,0,255,255), "Well Done");
+Text nextShapeText = Text(Vector3(255, 50, 0), Color(0,255,255,255), "Next Shape");
 Text currentLevelText = Text(Vector3(10, 20, 0), Color(255, 255, 255, 255), "Level: ");
 Text currentLevel = Text(Vector3(30, 35, 0), Color(255, 255, 255, 255), "1");
 
@@ -111,19 +121,6 @@ void interpolateShape()
 		currentShape->at(i) = currentShape->at(i) * (1.0 - morphTime) + targetShape.at(i) * morphTime;
 	}	
 
-	// TODO: need to change both of these loops so that they go in the order of the closest shape meanign a proper square will be drawn (hopefully)
-	
-	// draw the fill of the interpolating shape
-	
-	glPushMatrix();
-	glBegin(GL_TRIANGLE_FAN);
-	for (size_t i = 0; i < currentShape->size(); i++)
-	{
-		glVertex3f(currentShape->at(i).position.x, currentShape->at(i).position.y, currentShape->at(i).position.z);
-	}
-	glEnd();
-	glPopMatrix();
-
 	// draw the outline of the interpolating shape
 	glPushMatrix();
 	glBegin(GL_LINE_LOOP);
@@ -131,6 +128,46 @@ void interpolateShape()
 	for (size_t i = 0; i < currentShape->size(); i++)
 	{
 		glVertex3f(currentShape->at(i).position.x, currentShape->at(i).position.y, currentShape->at(i).position.z);
+	}
+	glEnd();
+	glPopMatrix();
+}
+
+void interpolateToNextShape()
+{
+	if (oldShapePoints.size() > newShapePoints.size())
+	{
+		int tempCount = oldShapePoints.size() - newShapePoints.size();
+		for (size_t i = 0; i < tempCount; i++)
+		{
+			oldShapePoints.pop_back();
+		}
+	}
+	if (newShapePoints.size() > oldShapePoints.size())
+	{
+		int oldLast = oldShapePoints.size() - 1;
+		int tempCount = newShapePoints.size() - oldShapePoints.size();
+		for (size_t i = 0; i < tempCount; i++)
+		{
+			oldShapePoints.push_back(Point(oldShapePoints.at(oldLast).position, oldShapePoints.at(oldLast).color,
+				oldShapePoints.at(oldLast).scale, oldShapePoints.at(oldLast).rotation));
+		}
+	}
+
+
+	// Interpolation of all of the potins of the shape
+	for (size_t i = 0; i < oldShapePoints.size(); i++)
+	{
+		oldShapePoints.at(i) = oldShapePoints.at(i) * (1.0 - morphTime/2) + newShapePoints.at(i) * morphTime * 0.5;
+	}
+
+	// draw the outline of the interpolating shape
+	glPushMatrix();
+	glBegin(GL_LINE_LOOP);
+	glColor4f(255, 0, 0, 255);
+	for (size_t i = 0; i < oldShapePoints.size(); i++)
+	{
+		glVertex3f(oldShapePoints.at(i).position.x, oldShapePoints.at(i).position.y, oldShapePoints.at(i).position.z);
 	}
 	glEnd();
 	glPopMatrix();
@@ -171,6 +208,33 @@ void mainGameLoop()
 	currentLevelText.drawText();
 	currentLevel.drawText();
 
+	// changing shape to the next shape
+	if (changingShapes)
+	{
+		if (morphTime > 1.0) morphTime = 1.0;
+		interpolateToNextShape();
+
+		auto elapsedTime = std::chrono::system_clock::now() - changeShapeStartTime;
+
+		if (std::chrono::duration<float>(elapsedTime).count() > shapeChangeTime)
+		{
+			changingShapes = false;
+		}
+
+		nextShapeText.drawText();
+
+		// Draw the mouse pointer
+		glPopMatrix();
+		glColor4f(255, 255, 255, 255);
+		mousePointer.drawShape(Vector3(mouseX, mouseY, 0));
+		glPopMatrix();
+
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+		glutSwapBuffers();
+		return;
+	}
+
 	// check for time and then respawn the game
 	if (showOrignalFinished)
 	{
@@ -178,6 +242,7 @@ void mainGameLoop()
 
 		auto elapsedTime = std::chrono::system_clock::now() - endStartTime;
 
+		// if it is time to show a new shape
 		if (std::chrono::duration<float>(elapsedTime).count() > levelStartTime)
 		{
 			level++;
@@ -237,6 +302,7 @@ void mainGameLoop()
 
 	// Draw the mouse pointer
 	glPopMatrix();
+	glColor4f(255, 255, 255, 255);
 	mousePointer.drawShape(Vector3(mouseX, mouseY, 0));
 	glPopMatrix();
 
@@ -253,6 +319,8 @@ void motion(int x, int y)
 
 void mouseClicks(int button, int state, int x, int y)
 {
+	if (changingShapes)
+		return;
 	if (inMainMenu)
 		mainMenuMouseClicked(button, state, x, y);
 	else if (inResultsScreen)
@@ -349,7 +417,15 @@ void mainGameMouseClicked(int button, int state, int x, int y)
 
 void chooseShape()
 {
-	int ran = rand() % (7 - 0 + 1) + 0;
+	int ran;
+	for (size_t i = 0; i < 10; i++)
+	{
+		ran = rand() % (7 - 0 + 1) + 0;
+		if (ran != previousShape)
+			break;
+	}
+	previousShape = ran;
+
 	switch (ran)
 	{
 	case 0:
@@ -386,6 +462,7 @@ void chooseShape()
 void init()
 {
 	chooseShape();
+	newShapePoints = *currentGameShape.points;
 	currentPoints = currentGameShape.points->size();
 	currentPointsText.setText(std::to_string(currentPoints));
 	learnStartTime = std::chrono::system_clock::now();
@@ -410,6 +487,11 @@ void reset()
 
 void newShape()
 {
+	// change to the new shape
+	changingShapes = true;
+	oldShapePoints = *currentGameShape.points;
+	changeShapeStartTime = std::chrono::system_clock::now();
+
 	// respawn a new object
 	mergeShapes = false;
 	showOrignalFinished = false;
@@ -422,8 +504,6 @@ void newShape()
 void keyPressed(unsigned char key, int x, int y)
 {
 }
-
-
 
 int main(int argc, char** argv) {
 	glutInit(&argc, argv);
