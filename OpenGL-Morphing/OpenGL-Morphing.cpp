@@ -442,7 +442,6 @@ void chooseShape()
 		break;
 	case 4:
 		currentGameShape = Pentagon(Vector3(300, 300, 0), 100);
-
 		break;
 	case 5:
 		currentGameShape = Arrow(Vector3(300, 300, 0), 100, 100);
