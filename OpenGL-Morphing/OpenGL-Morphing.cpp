@@ -56,7 +56,7 @@ int currentPoints;
 
 // changing shape
 std::chrono::system_clock::time_point changeShapeStartTime;
-float shapeChangeTime = 2;
+float shapeChangeTime = 5;
 
 // Timer
 float learnTime = 5;
@@ -69,7 +69,7 @@ int score = 0;
 int bestScore = 9999;
 
 // Level Systsem
-int level = 0, maxLevels = 5;
+int level = 0, maxLevels = 8;
 float levelStartTime = 2;
 int previousShape = 0;
 std::chrono::system_clock::time_point endStartTime;
@@ -108,9 +108,12 @@ void checkTime()
 	}
 }
 
+float ROT_TEST = 0;
+
 void idle()
 {
 	morphTime += 0.0000001;
+	ROT_TEST += 0.05;
 }
 
 void interpolateShape()
@@ -124,7 +127,7 @@ void interpolateShape()
 	// draw the outline of the interpolating shape
 	glPushMatrix();
 	glBegin(GL_LINE_LOOP);
-	glColor4f(255, 0, 0, 255); 
+	glColor4f(255 , 0, 0, 255); 
 	for (size_t i = 0; i < currentShape->size(); i++)
 	{
 		glVertex3f(currentShape->at(i).position.x, currentShape->at(i).position.y, currentShape->at(i).position.z);
@@ -158,17 +161,24 @@ void interpolateToNextShape()
 	// Interpolation of all of the potins of the shape
 	for (size_t i = 0; i < oldShapePoints.size(); i++)
 	{
-		oldShapePoints.at(i) = oldShapePoints.at(i) * (1.0 - morphTime/2) + newShapePoints.at(i) * morphTime * 0.5;
+		oldShapePoints.at(i) = oldShapePoints.at(i) * (1.0 - morphTime/3) + newShapePoints.at(i) * morphTime * 0.33;
 	}
 
 	// draw the outline of the interpolating shape
 	glPushMatrix();
+	
+	glTranslatef(300, 300, 0);
+	glRotatef(ROT_TEST, 0, 0, 1);
+	glTranslatef(-300, -300, -0);
+
 	glBegin(GL_LINE_LOOP);
 	glColor4f(255, 0, 0, 255);
+
 	for (size_t i = 0; i < oldShapePoints.size(); i++)
 	{
 		glVertex3f(oldShapePoints.at(i).position.x, oldShapePoints.at(i).position.y, oldShapePoints.at(i).position.z);
 	}
+
 	glEnd();
 	glPopMatrix();
 }
@@ -198,8 +208,6 @@ void mainGameLoop()
 	const double h = glutGet(GLUT_WINDOW_HEIGHT);
 	glOrtho(0, w, h, 0, -100, 100);
 
-
-
 	// Draw Text Objects
 	scoreText.drawText();
 	playerScore.drawText();
@@ -213,6 +221,7 @@ void mainGameLoop()
 	{
 		if (morphTime > 1.0) morphTime = 1.0;
 		interpolateToNextShape();
+		learnStartTime = std::chrono::system_clock::now();
 
 		auto elapsedTime = std::chrono::system_clock::now() - changeShapeStartTime;
 
@@ -417,43 +426,35 @@ void mainGameMouseClicked(int button, int state, int x, int y)
 
 void chooseShape()
 {
-	int ran;
-	for (size_t i = 0; i < 10; i++)
-	{
-		ran = rand() % (7 - 0 + 1) + 0;
-		if (ran != previousShape)
-			break;
-	}
-	previousShape = ran;
-
-	switch (ran)
+	switch (level)
 	{
 	case 0:
-		currentGameShape = Square(Vector3(300, 300, 0), 100, 100);
-		break;
-	case 1:
 		currentGameShape = Triangle(Vector3(300, 300, 0), 100, 100);
 		break;
+	case 1:
+		currentGameShape = Square(Vector3(300, 300, 0), 100, 100);
+		break;
 	case 2:
-		currentGameShape = Star(Vector3(300, 300, 0), 100);
-		break;
-	case 3:
-		currentGameShape = Pentagon(Vector3(300, 300, 0), 100);
-		break;
-	case 4:
-		currentGameShape = Cross(Vector3(300, 300, 0), 100, 100);
-		break;
-	case 5:
-		currentGameShape = Rhombus(Vector3(300, 300, 0), 100, 100);
-		break;
-	case 6:
 		currentGameShape = Trapezium(Vector3(300, 300, 0), 100, 100);
 		break;
-	case 7:
+	case 3:
+		currentGameShape = Rhombus(Vector3(300, 300, 0), 100, 100);
+		break;
+	case 4:
+		currentGameShape = Pentagon(Vector3(300, 300, 0), 100);
+
+		break;
+	case 5:
 		currentGameShape = Arrow(Vector3(300, 300, 0), 100, 100);
 		break;
+	case 6:
+		currentGameShape = Star(Vector3(300, 300, 0), 100);		
+		break;
+	case 7:
+		currentGameShape = Cross(Vector3(300, 300, 0), 100, 100);
+		break;
 	default:
-		currentGameShape = Square(Vector3(300, 300, 0), 100, 100);
+		currentGameShape = Triangle(Vector3(300, 300, 0), 100, 100);
 		break;
 	}
 
@@ -491,6 +492,8 @@ void newShape()
 	changingShapes = true;
 	oldShapePoints = *currentGameShape.points;
 	changeShapeStartTime = std::chrono::system_clock::now();
+	ROT_TEST = 0;
+	morphTime = 0;
 
 	// respawn a new object
 	mergeShapes = false;
@@ -522,4 +525,3 @@ int main(int argc, char** argv) {
 	glutMainLoop();
 	return 0;
 }
-

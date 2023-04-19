@@ -27,6 +27,25 @@ void Shape::drawShapeOutline()
 	glPushMatrix();
 	glBegin(GL_LINE_LOOP);
 	glColor4f(255, 255, 255, 255); // TODO: give each vertex a color attribute
+
+	for (size_t i = 0; i < points->size(); i++)
+	{
+		glVertex3f(points->at(i).position.x, points->at(i).position.y, points->at(i).position.z);
+	}
+	glEnd();
+	glPopMatrix();
+}
+
+void Shape::drawShapeOutline(float rot)
+{
+	glPushMatrix();
+	
+	glTranslatef(300, 300, 0);
+	glRotatef(rot, 0, 0, 1);
+	glTranslatef(-300, -300, -0);
+
+	glBegin(GL_LINE_LOOP);
+	glColor4f(255, 255, 255, 255); // TODO: give each vertex a color attribute
 	for (size_t i = 0; i < points->size(); i++)
 	{
 		glVertex3f(points->at(i).position.x, points->at(i).position.y, points->at(i).position.z);

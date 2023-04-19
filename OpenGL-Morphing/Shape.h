@@ -18,6 +18,7 @@ public:
 	void drawShape(Vector3);
 	void drawShape();
 	void drawShapeOutline();
+	void drawShapeOutline(float);
 
 };
 
