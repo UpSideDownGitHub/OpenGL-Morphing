@@ -2,32 +2,47 @@
 
 Shape::Shape(){}
 
+/*
+	this will handle drawning the shape to the screen at given position
+*/
 void Shape::drawShape(Vector3 newPos)
 {
+	// move the shape to the given poisition
 	glTranslatef(newPos.x, newPos.y, newPos.z);
-
+	
+	// draw the shape using quads
 	glBegin(GL_QUADS);
+	// draw each point of the shape
 	for (size_t i = 0; i < points->size(); i++)
 	{
 		glVertex3f(points->at(i).position.x, points->at(i).position.y, points->at(i).position.z);
 	}
 	glEnd();
 }
+/*
+	this is used to draw the shape where it is 
+*/
 void Shape::drawShape()
 {
+	// draw with quads
 	glBegin(GL_QUADS);
+	// draw each position to the screen
 	for (size_t i = 0; i < points->size(); i++)
 	{
 		glVertex3f(points->at(i).position.x, points->at(i).position.y, points->at(i).position.z);
 	}
 	glEnd();
 }
+/*
+	this function will handle drawning the outline of the shape
+*/
 void Shape::drawShapeOutline()
 {
 	glPushMatrix();
+	// draw using a line loop
 	glBegin(GL_LINE_LOOP);
-	glColor4f(255, 255, 255, 255); // TODO: give each vertex a color attribute
-
+	glColor4f(255, 255, 255, 255);
+	// draw each point of the shape
 	for (size_t i = 0; i < points->size(); i++)
 	{
 		glVertex3f(points->at(i).position.x, points->at(i).position.y, points->at(i).position.z);
@@ -36,16 +51,22 @@ void Shape::drawShapeOutline()
 	glPopMatrix();
 }
 
+/*
+	draw the outline of the shape with a rotation
+*/
 void Shape::drawShapeOutline(float rot)
 {
 	glPushMatrix();
 	
+	// rotate the shape
 	glTranslatef(300, 300, 0);
 	glRotatef(rot, 0, 0, 1);
 	glTranslatef(-300, -300, -0);
 
+	// draw the shape with a line loop
 	glBegin(GL_LINE_LOOP);
-	glColor4f(255, 255, 255, 255); // TODO: give each vertex a color attribute
+	glColor4f(255, 255, 255, 255);
+	// draw all of the points of the shape
 	for (size_t i = 0; i < points->size(); i++)
 	{
 		glVertex3f(points->at(i).position.x, points->at(i).position.y, points->at(i).position.z);
@@ -54,7 +75,7 @@ void Shape::drawShapeOutline(float rot)
 	glPopMatrix();
 }
 
-
+// Sqaure
 Square::Square(Vector3 pos, float width, float height)
 {
 	// need to find the point for the square shape
@@ -80,6 +101,7 @@ Square::Square(Vector3 pos, float width, float height)
 	points->push_back(point);
 }
 
+// Triangle
 Triangle::Triangle(Vector3 pos, float width, float height)
 {
 	// need to find the point for the square shape
@@ -93,6 +115,7 @@ Triangle::Triangle(Vector3 pos, float width, float height)
 	this->width = width;
 	this->height = height;
 
+	//Vector3 pos, Color col, float sca, float rot
 	Point point = Point(Vector3(pos.x, pos.y - height/2, pos.z), Color(255, 255, 255, 255), 1, 0);
 	points->push_back(point);
 	point = Point(Vector3(pos.x - width/2, pos.y + height/2, pos.z), Color(255, 255, 255, 255), 1, 0);
@@ -101,6 +124,7 @@ Triangle::Triangle(Vector3 pos, float width, float height)
 	points->push_back(point);
 }
 
+// Start
 Star::Star(Vector3 pos, float radius)
 {
 	// equation for the points on a start
@@ -134,6 +158,7 @@ Star::Star(Vector3 pos, float radius)
 	}
 }
 
+// Pentagon
 Pentagon::Pentagon(Vector3 pos, float radius)
 {
 	// equation for the points on a start
@@ -151,6 +176,7 @@ Pentagon::Pentagon(Vector3 pos, float radius)
 	}
 }
 
+// Cross
 Cross::Cross(Vector3 pos, float height, float width)
 {
 	// need to find the point for the cross shape
@@ -167,6 +193,7 @@ Cross::Cross(Vector3 pos, float height, float width)
 	this->height = height;
 	this->width = width;
 
+	//Vector3 pos, Color col, float sca, float rot
 	Point point = Point(Vector3(pos.x - width / 3, pos.y + height, pos.z), Color(0, 0, 0, 255), 1, 0); // 1
 	points->push_back(point);
 	point = Point(Vector3(pos.x + width / 3, pos.y + height, pos.z), Color(0, 0, 0, 255), 1, 0);// 2
@@ -193,6 +220,7 @@ Cross::Cross(Vector3 pos, float height, float width)
 	points->push_back(point);
 }
 
+// Phombus
 Rhombus::Rhombus(Vector3 pos, float height, float width)
 {
 	// need to find the point for the cross shape
@@ -210,6 +238,7 @@ Rhombus::Rhombus(Vector3 pos, float height, float width)
 	this->height = height;
 	this->width = width;
 
+	//Vector3 pos, Color col, float sca, float rot
 	Point point = Point(Vector3(pos.x, pos.y + height, pos.z), Color(0, 0, 0, 255), 1, 0); // 1
 	points->push_back(point);
 	point = Point(Vector3(pos.x + width / 2, pos.y, pos.z), Color(0, 0, 0, 255), 1, 0);// 2
@@ -220,6 +249,7 @@ Rhombus::Rhombus(Vector3 pos, float height, float width)
 	points->push_back(point);
 }
 
+//Trapezium
 Trapezium::Trapezium(Vector3 pos, float height, float width)
 {
 	// need to find the point for the cross shape
@@ -233,6 +263,7 @@ Trapezium::Trapezium(Vector3 pos, float height, float width)
 	this->height = height;
 	this->width = width;
 
+	//Vector3 pos, Color col, float sca, float rot
 	Point point = Point(Vector3(pos.x - width/2, pos.y - height/2, pos.z), Color(0, 0, 0, 255), 1, 0); // 1
 	points->push_back(point);
 	point = Point(Vector3(pos.x + width / 2, pos.y - height/2, pos.z), Color(0, 0, 0, 255), 1, 0);// 2
@@ -243,6 +274,7 @@ Trapezium::Trapezium(Vector3 pos, float height, float width)
 	points->push_back(point);
 }
 
+// Arrow
 Arrow::Arrow(Vector3 pos, float height, float width)
 {
 	// need to find the point for the cross shape
@@ -257,7 +289,8 @@ Arrow::Arrow(Vector3 pos, float height, float width)
 	*/
 	this->height = height;
 	this->width = width;
-
+	
+	//Vector3 pos, Color col, float sca, float rot
 	Point point = Point(Vector3(pos.x, pos.y - height/3, pos.z), Color(0, 0, 0, 255), 1, 0); // 1
 	points->push_back(point);
 	point = Point(Vector3(pos.x, pos.y - height, pos.z), Color(0, 0, 0, 255), 1, 0);// 2

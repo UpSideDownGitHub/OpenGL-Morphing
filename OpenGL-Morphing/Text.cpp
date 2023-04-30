@@ -1,6 +1,6 @@
 #include "Text.h"
 
-// Constructor
+// Constructors
 Text::Text(){}
 Text::Text(Vector3 val1, Color val2, std::string val3)
 {
@@ -11,12 +11,17 @@ Text::Text(Vector3 val1, Color val2, std::string val3)
 
 
 // Methods
+/*
+	this function will draw the given text to the screen
+*/
 void Text::drawText()
 {
 	glPushMatrix();
 	glColor4f(color.r, color.g, color.b, color.a);
 	glRasterPos2i(position.x, position.y);
+	// set the font
 	void* font = GLUT_BITMAP_9_BY_15;
+	// for all of the characters draw them to the screen
 	for (std::string::iterator i = text.begin(); i != text.end(); ++i)
 	{
 		char c = *i;

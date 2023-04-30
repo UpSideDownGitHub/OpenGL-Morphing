@@ -1,5 +1,9 @@
 #include "MainMenu.h"
 
+/*
+	this class will set up all of the text for the main menu and also setup a button 
+	that when clicked will play the game
+*/
 MainMenu::MainMenu() 
 { 
 	this->titleText = Text(Vector3(250, 100, 0), Color(0, 255, 0, 255), "Shape Morphing");
@@ -31,8 +35,13 @@ nice when it is finshed merging
 */
 }
 
+/*
+	this function will draw all of the elements of the main menu to the
+	screen
+*/
 void MainMenu::drawMainMenu()
 {
+	// clear the color and reset the Color & Depth Buffer bits
 	glClearColor(0, 0, 0, 1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -42,7 +51,8 @@ void MainMenu::drawMainMenu()
 	const double w = glutGet(GLUT_WINDOW_WIDTH);
 	const double h = glutGet(GLUT_WINDOW_HEIGHT);
 	glOrtho(0, w, h, 0, -100, 100);
-
+	
+	// Draw all of the elements to the screen
 	titleText.drawText();
 	instructionsTitleText.drawText();
 	instructionsline1Text.drawText();
@@ -56,7 +66,8 @@ void MainMenu::drawMainMenu()
 	instructionsline9Text.drawText();
 	instructionsline10Text.drawText();
 	clickToStartText.drawText();
-
+	
+	// set the matrix mode and load the Identiy and swap buffers to finalize the drawing
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glutSwapBuffers();

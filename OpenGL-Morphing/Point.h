@@ -22,11 +22,11 @@ public:
 	Color color;
 	float scale;
 	float rotation;
-
+	
+	// Operators
 	Point operator * (float k) {
 		return Point(position * k, color, scale, rotation);
 	}
-
 	Point operator + (Point p) {
 		return Point(position + p.position, color, scale, rotation);
 	}

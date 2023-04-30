@@ -24,7 +24,6 @@ public:
 	float magnitude();
 
 	// Operators
-
 	Vector3 operator + (Vector3 p) 
 	{
 		return Vector3(x + p.x, y + p.y, z + p.z);
