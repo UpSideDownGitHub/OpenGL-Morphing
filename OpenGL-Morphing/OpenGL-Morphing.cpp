@@ -137,7 +137,8 @@ void interpolateShape()
 	// to create the merging of the shapes
 	for (size_t i = 0; i < currentShape->size(); i++)
 	{
-		currentShape->at(i) = currentShape->at(i) * (1.0 - morphTime) + targetShape.at(i) * morphTime;
+		currentShape->at(i) = currentShape->at(i) + ((targetShape.at(i) - currentShape->at(i)) * morphTime);
+		//currentShape->at(i) = currentShape->at(i) * (1.0 - morphTime) + targetShape.at(i) * morphTime;
 	}	
 
 	// draw the outline of the interpolating shape
@@ -190,7 +191,8 @@ void interpolateToNextShape()
 	// Interpolation of all of the points of the shape
 	for (size_t i = 0; i < oldShapePoints.size(); i++)
 	{
-		oldShapePoints.at(i) = oldShapePoints.at(i) * (1.0 - morphTime/3) + newShapePoints.at(i) * morphTime * 0.33;
+		oldShapePoints.at(i) = oldShapePoints.at(i) + ((newShapePoints.at(i) - oldShapePoints.at(i)) * morphTime);
+		//oldShapePoints.at(i) = oldShapePoints.at(i) * (1.0 - morphTime/3) + newShapePoints.at(i) * morphTime * 0.33;
 	}
 
 	// draw the outline of the interpolating shape

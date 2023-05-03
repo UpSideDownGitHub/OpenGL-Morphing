@@ -30,5 +30,8 @@ public:
 	Point operator + (Point p) {
 		return Point(position + p.position, color, scale, rotation);
 	}
+	Point operator - (Point p) {
+		return Point(position - p.position, color, scale, rotation);
+	}
 };
 #endif
